@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Ruleta Casino</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="casino">
+  <h1>🎰 RULETA DE CASINO 🎰</h1>
+
+  <div class="ruleta-wrapper">
+    <div class="flecha"></div>
+    <canvas id="idcanvas" width="520" height="520"></canvas>
+    <div class="centro"></div>
+  </div>
+
+  <button id="boton" onclick="sortear()">
+    <span id="idestado">SPIN</span>
+  </button>
+
+  <h3 id="premio" class="premio"></h3>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
