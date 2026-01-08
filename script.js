@@ -1,85 +1,114 @@
-const sectores = [
-  { texto: "0", color: "#0a8f08" },
-  { texto: "32", color: "red" },
-  { texto: "15", color: "black" },
-  { texto: "19", color: "red" },
-  { texto: "4",  color: "black" },
-  { texto: "21", color: "red" },
-  { texto: "2",  color: "black" },
-  { texto: "25", color: "red" },
-  { texto: "17", color: "black" },
-  { texto: "34", color: "red" },
-  { texto: "6",  color: "black" },
-  { texto: "27", color: "red" }
+const canvas = document.getElementById("ruleta");
+const ctx = canvas.getContext("2d");
+const bola = document.querySelector(".bola");
+const sombra = document.querySelector(".bola-sombra");
+const resultado = document.getElementById("resultado");
+
+const premios = [
+  "0", "32", "15", "19", "4", "21", "2", "25",
+  "17", "34", "6", "27", "13", "36", "11", "30",
+  "8", "23", "10", "5", "24", "16", "33", "1",
+  "20", "14", "31", "9", "22", "18", "29", "7",
+  "28", "12", "35", "3", "26"
 ];
 
-const canvas = document.getElementById("idcanvas");
-const ctx = canvas.getContext("2d");
-const center = canvas.width / 2;
-const radius = center - 10;
+const size = canvas.width;
+const cx = size / 2;
+const cy = size / 2;
+const rExterior = size / 2 - 20;
+const rInterior = rExterior - 80;
 
-let angulo = 0;
+let anguloRuleta = 0;
+let anguloBola = 0;
+let velocidad = 0;
 let girando = false;
 
+/* DIBUJAR RULETA */
 function dibujarRuleta() {
-  const paso = (2 * Math.PI) / sectores.length;
+  ctx.clearRect(0, 0, size, size);
+  const angulo = (2 * Math.PI) / premios.length;
 
-  sectores.forEach((s, i) => {
+  for (let i = 0; i < premios.length; i++) {
     ctx.beginPath();
-    ctx.moveTo(center, center);
-    ctx.arc(center, center, radius, paso * i, paso * (i + 1));
-    ctx.fillStyle = s.color;
+    ctx.moveTo(cx, cy);
+    ctx.arc(
+      cx,
+      cy,
+      rExterior,
+      i * angulo + anguloRuleta,
+      (i + 1) * angulo + anguloRuleta
+    );
+    ctx.fillStyle = i % 2 === 0 ? "#b30000" : "#111";
     ctx.fill();
-    ctx.strokeStyle = "#111";
-    ctx.stroke();
 
     ctx.save();
-    ctx.translate(center, center);
-    ctx.rotate(paso * i + paso / 2);
-    ctx.textAlign = "right";
+    ctx.translate(cx, cy);
+    ctx.rotate(i * angulo + anguloRuleta + angulo / 2);
     ctx.fillStyle = "white";
-    ctx.font = "bold 18px Arial";
-    ctx.fillText(s.texto, radius - 15, 6);
+    ctx.font = "bold 16px Arial";
+    ctx.textAlign = "right";
+    ctx.fillText(premios[i], rExterior - 20, 5);
     ctx.restore();
-  });
+  }
+
+  // centro
+  ctx.beginPath();
+  ctx.arc(cx, cy, 50, 0, Math.PI * 2);
+  ctx.fillStyle = "#222";
+  ctx.fill();
 }
 
-dibujarRuleta();
+/* MOVER BOLA */
+function moverBola() {
+  const r = rInterior + 10;
+  const x = cx + Math.cos(anguloBola) * r;
+  const y = cy + Math.sin(anguloBola) * r;
 
-function sortear() {
+  bola.style.left = `${x - 9}px`;
+  bola.style.top = `${y - 9}px`;
+
+  sombra.style.left = `${x - 9}px`;
+  sombra.style.top = `${y + 4}px`;
+}
+
+/* ANIMACIÓN */
+function animar() {
+  if (!girando) return;
+
+  anguloRuleta += velocidad;
+  anguloBola -= velocidad * 1.5;
+  velocidad *= 0.99;
+
+  dibujarRuleta();
+  moverBola();
+
+  if (velocidad < 0.002) {
+    girando = false;
+    mostrarResultado();
+  } else {
+    requestAnimationFrame(animar);
+  }
+}
+
+/* GIRAR */
+function girar() {
   if (girando) return;
+  resultado.textContent = "";
+  velocidad = Math.random() * 0.3 + 0.25;
   girando = true;
-
-  document.getElementById("idestado").innerText = "SPINNING...";
-
-  let velocidad = Math.random() * 35 + 40;
-  const friccion = 0.985;
-
-  const animar = () => {
-    velocidad *= friccion;
-    angulo += velocidad;
-
-    canvas.style.transform = `rotate(${angulo}deg)`;
-
-    if (velocidad > 0.4) {
-      requestAnimationFrame(animar);
-    } else {
-      finalizar();
-    }
-  };
-
   animar();
 }
 
-function finalizar() {
-  girando = false;
-  document.getElementById("boton").style.display = "none";
+/* RESULTADO */
+function mostrarResultado() {
+  const angulo = (2 * Math.PI) / premios.length;
+  const index = Math.floor(
+    ((2 * Math.PI - (anguloRuleta % (2 * Math.PI))) / angulo)
+  ) % premios.length;
 
-  const grados = (angulo % 360 + 360) % 360;
-  const index = Math.floor((360 - grados) / (360 / sectores.length));
-  const resultado = sectores[index % sectores.length];
-
-  const premio = document.getElementById("premio");
-  premio.innerText = `🎲 Resultado: ${resultado.texto}`;
-  premio.style.display = "block";
+  resultado.textContent = `🎉 Resultado: ${premios[index]} 🎉`;
 }
+
+/* INIT */
+dibujarRuleta();
+moverBola();
